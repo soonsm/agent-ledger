@@ -483,11 +483,12 @@ Agent Ledger는 이 둘 사이를 장부로 연결한다.
 # 7. 스키마 변경 원칙
 
 - `id`는 한 번 실제 장부에 사용되면 변경하거나 재사용하지 않는다.
-- `key`, `description`, `question`은 의미를 더 명확히 하기 위해 변경할 수 있다.
-- 과거 데이터 해석을 깨뜨릴 수 있는 `type` 변경은 일반적인 update와 다르게 취급해야 한다.
+- v1에서 `key`, `description`, `question`은 **같은 관찰 항목의 의미를 더 명확하게 표현하는 범위에서만** 변경할 수 있다.
+- `type`, `min`, `max`, `values`, `audit.aggregation`, `audit.threshold`는 기존 ID에서 변경하지 않는다.
+- 무엇을 측정하거나 어떻게 판단·누적하는지가 바뀌면 기존 항목을 `deprecated`하고 새 ID의 항목을 생성한다.
 - 이미 사용된 항목을 중단할 때는 기본적으로 삭제하지 않고 `deprecated`로 전환하며, `deprecation_reason`을 반드시 기록한다.
 - 아직 어떤 장부 기록에도 사용되지 않은 항목만 물리 삭제할 수 있다.
-- 명세 변경은 `agent-ledger spec ...` 명령을 정상 경로로 사용한다.
+- 명세 변경은 `git ledger spec ...` 명령을 정상 경로로 사용한다.
 - 명세를 변경할 때는 전체 스키마 validation을 통과한 경우에만 파일을 갱신한다.
 
 ---
