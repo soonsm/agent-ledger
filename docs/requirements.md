@@ -224,7 +224,7 @@ missing → not-run
 다음에 준하는 기능을 제공해야 한다.
 
 ```text
-agent-ledger spec add
+git ledger spec add
 ```
 
 새 항목 추가 시 다음을 검증한다.
@@ -242,7 +242,7 @@ ID는 CLI가 자동 생성하는 방식을 우선 고려한다.
 다음에 준하는 기능을 제공해야 한다.
 
 ```text
-agent-ledger spec update <id>
+git ledger spec update <id>
 ```
 
 수정 가능한 속성에는 최소 다음을 포함한다.
@@ -257,32 +257,42 @@ agent-ledger spec update <id>
 
 ### R-SPEC-103 항목 폐기
 
-이미 사용된 항목을 더 이상 새 커밋에서 요구하지 않도록 폐기할 수 있어야 한다.
+이미 사용된 항목이라도 더 이상 해당 관점을 관찰하지 않기로 결정했다면 폐기할 수 있어야 한다.
 
 ```text
-agent-ledger spec deprecate <id>
+git ledger spec deprecate <id> --reason "<reason>"
 ```
+
+폐기 이유는 필수다.
 
 폐기된 항목은:
 
 - 신규 커밋에서는 값을 요구하지 않는다.
 - 과거 Git Notes를 해석할 때는 정의가 유지된다.
 - ID를 다른 의미로 재사용하지 않는다.
+- `deprecation_reason`에 관찰을 중단한 이유를 저장한다.
 
 ### R-SPEC-104 항목 복구
 
-폐기한 항목을 다시 활성화할 수 있어야 한다.
+폐기한 항목을 다시 관찰해야 할 필요가 생기면 같은 ID로 다시 활성화할 수 있어야 한다.
 
 ```text
-agent-ledger spec restore <id>
+git ledger spec restore <id>
 ```
+
+복구되면:
+
+- `status`는 `active`가 된다.
+- 이후 새 커밋에서 해당 항목의 값을 다시 반드시 요구한다.
+- 현재 명세의 `deprecation_reason`은 제거한다.
+- stable ID는 유지한다.
 
 ### R-SPEC-105 항목 삭제
 
 아직 어떤 장부 기록에서도 사용되지 않은 항목은 물리적으로 삭제할 수 있어야 한다.
 
 ```text
-agent-ledger spec remove <id>
+git ledger spec remove <id>
 ```
 
 이미 사용 이력이 있는 경우 삭제를 거절하고 `deprecate` 사용을 안내해야 한다.
@@ -292,7 +302,7 @@ agent-ledger spec remove <id>
 ```text
 L001 has already been recorded in 37 commits.
 The field cannot be removed.
-Use `agent-ledger spec deprecate L001` instead.
+Use `git ledger spec deprecate L001` instead.
 ```
 
 ### R-SPEC-106 명세 조회
@@ -300,8 +310,8 @@ Use `agent-ledger spec deprecate L001` instead.
 최소 다음 조회 기능을 제공한다.
 
 ```text
-agent-ledger spec list
-agent-ledger spec show <id>
+git ledger spec list
+git ledger spec show <id>
 ```
 
 ### R-SPEC-107 명세 검증
@@ -309,7 +319,7 @@ agent-ledger spec show <id>
 다음 명령을 제공한다.
 
 ```text
-agent-ledger spec validate
+git ledger spec validate
 ```
 
 최소 검증 대상:
@@ -325,7 +335,7 @@ agent-ledger spec validate
 - status
 - audit 설정
 
-명세가 유효하지 않은 상태에서는 `agent-ledger commit`이 실행되어서는 안 된다.
+명세가 유효하지 않은 상태에서는 `git ledger commit`이 실행되어서는 안 된다.
 
 ### R-SPEC-108 안전한 파일 갱신
 
@@ -352,7 +362,7 @@ CLI를 통한 명세 변경은 validation을 통과한 경우에만 원본 파�
 AI가 사용할 기본 커밋 명령을 제공한다.
 
 ```text
-agent-ledger commit
+git ledger commit
 ```
 
 CLI 옵션이나 입력 방식은 구현 과정에서 결정할 수 있지만, AI Coding Agent가 비대화된 명령문을 작성하지 않아도 사용할 수 있어야 한다.
@@ -361,13 +371,13 @@ CLI 옵션이나 입력 방식은 구현 과정에서 결정할 수 있지만, A
 
 v1에서는 일반적인 Git index를 사용한다.
 
-즉 사용자는 기존과 동일하게 필요한 파일을 stage할 수 있고, `agent-ledger commit`은 현재 staged changes를 대상으로 커밋한다.
+즉 사용자는 기존과 동일하게 필요한 파일을 stage할 수 있고, `git ledger commit`은 현재 staged changes를 대상으로 커밋한다.
 
 Agent Ledger가 사용자 의도 없이 자동으로 모든 working-tree 변경을 stage해서는 안 된다.
 
 ### R-COMMIT-003 active 필드 전부 요구
 
-현재 명세에서 필수이며 `active` 상태인 장부 항목은 커밋 전에 모두 명시적으로 제출되어야 한다.
+현재 명세에서 `active` 상태인 모든 장부 항목은 커밋 전에 모두 명시적으로 제출되어야 한다.
 
 하나라도 누락되면 실제 Git commit을 생성하지 않는다.
 
@@ -506,7 +516,7 @@ Agent Ledger는 사용자가 원격 저장소에서도 장부를 유지하려면
 
 ### R-HUMAN-001 일반 git commit 허용
 
-v1에서는 사람에게 `agent-ledger commit` 사용을 강제하지 않는다.
+v1에서는 사람에게 `git ledger commit` 사용을 강제하지 않는다.
 
 사람은 필요하면 기존 `git commit`을 사용할 수 있다.
 
@@ -689,8 +699,8 @@ AI Coding Agent가 안정적으로 호출할 수 있도록 non-interactive invoc
 
 ```text
 agent-ledger --help
-agent-ledger commit --help
-agent-ledger spec --help
+git ledger commit --help
+git ledger spec --help
 ```
 
 AI가 명령 사용법을 추가 문서 없이도 어느 정도 복구할 수 있어야 한다.
@@ -706,7 +716,7 @@ Agent Ledger는 저장소에 추가할 수 있는 최소 agent instruction 예�
 ```text
 ## Commits
 
-When creating a commit, always use `agent-ledger commit`.
+When creating a commit, always use `git ledger commit`.
 Do not invoke `git commit` directly and do not use `--no-verify`
 or another mechanism to bypass this process.
 
@@ -715,7 +725,7 @@ Review the current change and explicitly provide every required value,
 including zero, false, or not-run values. Never omit a field because
 it appears irrelevant. Follow the field description returned by the CLI.
 
-Use `agent-ledger spec ...` commands when changing the ledger specification.
+Use `git ledger spec ...` commands when changing the ledger specification.
 Do not edit the ledger specification directly unless recovery requires it.
 ```
 
@@ -731,7 +741,7 @@ Do not edit the ledger specification directly unless recovery requires it.
 
 ### R-NFR-002 빠른 시작
 
-`agent-ledger commit` 자체의 startup overhead는 사람이 체감할 정도로 커서는 안 된다.
+`git ledger commit` 자체의 startup overhead는 사람이 체감할 정도로 커서는 안 된다.
 
 AI가 제출한 semantic assertion을 CLI가 다시 추론하지 않으므로 기본 validation은 로컬에서 빠르게 완료되어야 한다.
 
@@ -767,8 +777,8 @@ v1은 피드백 루프의 가장 작은 유효한 형태를 검증하는 데 집
 8. `spec remove`
 9. `spec list`
 10. `spec show`
-11. `agent-ledger commit`
-12. 모든 active/required 필드의 명시적 제출 강제
+11. `git ledger commit`
+12. 모든 active 필드의 명시적 제출 강제
 13. 누락 시 commit 거절 및 구체적인 feedback
 14. field type/constraint validation
 15. Git commit 생성
@@ -825,7 +835,7 @@ v1은 피드백 루프의 가장 작은 유효한 형태를 검증하는 데 집
 
 - `agent-ledger.json`의 정확한 JSON schema
 - field ID 생성 규칙
-- `agent-ledger commit`에 장부 값을 전달하는 구체적인 CLI UX
+- `git ledger commit`에 장부 값을 전달하는 구체적인 CLI UX
 - Git Notes ref의 정확한 이름
 - audit event의 데이터 모델
 - threshold의 aggregation 종류 (`sum`, `count` 등)
