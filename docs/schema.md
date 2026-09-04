@@ -51,7 +51,6 @@ agent-ledger.json
       "question": "이번 변경에서 추가한 상태 플래그 수는? 없으면 0.",
       "type": "integer",
       "min": 0,
-      "required": true,
       "status": "active",
       "audit": {
         "aggregation": "sum",
@@ -265,19 +264,11 @@ string
 - 자유 텍스트 때문에 같은 상태가 여러 표현으로 갈라지는 것을 막는다.
 - 이후 기계적인 질의와 집계를 안정적으로 만든다.
 
-### `required`
+### 제출 필수 여부
 
-**커밋 전에 호출자가 반드시 값을 명시적으로 제출해야 하는지 나타낸다.**
+v1에서는 별도의 `required` 필드를 두지 않는다.
 
-예:
-
-```json
-"required": true
-```
-
-Agent Ledger의 핵심 목적과 직접 연결되는 필드다.
-
-`required: true`인 active 항목은 값이 없으면 커밋을 거절한다.
+**`active` 상태인 모든 장부 항목은 항상 제출 필수다.** 값이 없으면 커밋을 거절한다. 반대로 `deprecated` 상태인 항목은 새 커밋에서 제출을 요구하지 않는다.
 
 다음 둘은 명확히 구분한다.
 
@@ -292,6 +283,8 @@ state_flags_added = <missing>
 첫 번째는 AI가 검토한 뒤 0이라고 판단했다는 assertion이다. 두 번째는 검토했는지 알 수 없으므로 유효하지 않다.
 
 Agent Ledger는 `missing`을 자동으로 `0`, `false`, `not-run` 등으로 바꾸지 않는다.
+
+별도의 `required` 필드를 두지 않는 이유는 v1에서 선택적 active 항목이라는 개념이 필요하지 않기 때문이다. `status`만으로 현재 관찰 대상인지 여부와 제출 의무를 동시에 표현한다.
 
 ---
 
@@ -318,7 +311,7 @@ deprecated
 
 새 커밋에서 현재 사용 중인 항목이다.
 
-`required: true`라면 커밋 전에 반드시 명시적 값을 제출해야 한다.
+새 커밋에서는 반드시 명시적 값을 제출해야 한다.
 
 #### `deprecated`
 
@@ -404,7 +397,7 @@ commit D  L001 = 1
 |---|---|---|
 | Identity | `id`, `key` | 이 항목은 무엇이며 과거의 어느 기록과 같은 항목인가? |
 | Meaning | `description`, `question` | 무엇을 의미하고 AI는 지금 무엇을 판단해야 하는가? |
-| Validation | `type`, `min`, `max`, `values`, `required` | 어떤 답을 유효한 값으로 인정할 것인가? |
+| Validation | `type`, `min`, `max`, `values` | 어떤 답을 유효한 값으로 인정할 것인가? |
 | Lifecycle | `status` | 이 항목을 지금도 새 커밋에서 사용하고 있는가? |
 | Feedback | `audit.aggregation`, `audit.threshold` | 기록이 어떻게 누적되고 언제 더 큰 검토를 시작해야 하는가? |
 
@@ -435,7 +428,6 @@ Agent Ledger는 이 둘 사이를 장부로 연결한다.
       "question": "이번 변경에서 추가한 상태 플래그 수는? 없으면 0.",
       "type": "integer",
       "min": 0,
-      "required": true,
       "status": "active",
       "audit": {
         "aggregation": "sum",
@@ -449,7 +441,6 @@ Agent Ledger는 이 둘 사이를 장부로 연결한다.
       "question": "현재 변경에 대해 typecheck를 수행했는가?",
       "type": "enum",
       "values": ["passed", "failed", "not-run"],
-      "required": true,
       "status": "active"
     }
   ]
@@ -481,8 +472,8 @@ Agent Ledger는 이 둘 사이를 장부로 연결한다.
 - 장부 항목을 Identity / Meaning / Validation / Lifecycle / Feedback의 다섯 역할로 본다.
 - stable `id`와 사람이 읽는 `key`를 분리한다.
 - `description`과 `question`을 분리한다.
-- 값의 형식과 필수 제출 여부를 Validation에서 정의한다.
-- 항목의 현재 사용 여부를 `status`로 관리한다.
+- 값의 형식은 Validation에서 정의하고, 제출 의무는 Lifecycle의 `status`로 결정한다.
+- 항목의 현재 사용 여부를 `status`로 관리한다. `active`는 항상 제출 필수이며 `deprecated`는 새 커밋에서 요구하지 않는다.
 - 누적 감사가 필요한 항목은 `audit.aggregation`과 `audit.threshold`를 가진다.
 - 대부분의 field 속성은 평평하게 유지하고 audit 설정만 중첩한다.
 
