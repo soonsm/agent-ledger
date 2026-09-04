@@ -317,9 +317,36 @@ deprecated
 
 새 커밋에서는 더 이상 값을 요구하지 않지만, 과거 장부를 해석하기 위해 정의는 유지되는 항목이다.
 
-이미 장부에 사용된 항목을 중단할 때는 기본적으로 삭제보다 `deprecated`를 사용한다.
+이미 장부에 사용된 항목을 중단할 때는 기본적으로 삭제보다 `deprecated`를 사용한다. 사용 이력이 있더라도 "이 관점을 더 이상 관찰하지 않기로 결정했다"면 정상적으로 deprecated할 수 있어야 한다.
 
-필요하면 나중에 다시 `active`로 복구할 수 있다.
+deprecated 상태로 전환할 때는 **왜 더 이상 관찰하지 않는지 이유를 반드시 기록한다.**
+
+필요하면 나중에 다시 `active`로 복구할 수 있다. 복구하면 새 커밋에서 다시 값을 요구하며, 현재 명세의 `deprecation_reason`은 제거한다.
+
+### `deprecation_reason`
+
+**항목을 더 이상 관찰하지 않기로 결정한 이유다.**
+
+`status: "deprecated"`일 때 필수이며 비어 있을 수 없다. `active` 상태에서는 존재하지 않는다.
+
+용도:
+
+- 과거에 중요했던 관점을 왜 중단했는지 설명한다.
+- 나중에 같은 관점을 다시 활성화해야 하는지 판단할 근거를 남긴다.
+- 다른 항목으로 대체되어 폐기된 경우 그 관계를 사람이 이해할 수 있게 한다.
+- 실수로 비활성화된 것인지, 의도적으로 관찰을 중단한 것인지 구분한다.
+
+예:
+
+```json
+{
+  "id": "L001",
+  "status": "deprecated",
+  "deprecation_reason": "상태 플래그 개수 대신 상태 전이 모델 자체를 감사하기로 했기 때문"
+}
+```
+
+복구 시에는 `status`를 다시 `active`로 바꾸고 현재 명세의 `deprecation_reason`을 제거한다. 과거 Git 이력에는 deprecated와 restore가 발생했던 사실이 남는다.
 
 ---
 
@@ -398,7 +425,7 @@ commit D  L001 = 1
 | Identity | `id`, `key` | 이 항목은 무엇이며 과거의 어느 기록과 같은 항목인가? |
 | Meaning | `description`, `question` | 무엇을 의미하고 AI는 지금 무엇을 판단해야 하는가? |
 | Validation | `type`, `min`, `max`, `values` | 어떤 답을 유효한 값으로 인정할 것인가? |
-| Lifecycle | `status` | 이 항목을 지금도 새 커밋에서 사용하고 있는가? |
+| Lifecycle | `status`, `deprecation_reason` | 이 항목을 지금도 새 커밋에서 사용하는가? 중단했다면 왜 중단했는가? |
 | Feedback | `audit.aggregation`, `audit.threshold` | 기록이 어떻게 누적되고 언제 더 큰 검토를 시작해야 하는가? |
 
 이 역할 구분에서 특히 중요한 것은 **Meaning과 Feedback을 분리하는 것**이다.
@@ -458,7 +485,7 @@ Agent Ledger는 이 둘 사이를 장부로 연결한다.
 - `id`는 한 번 실제 장부에 사용되면 변경하거나 재사용하지 않는다.
 - `key`, `description`, `question`은 의미를 더 명확히 하기 위해 변경할 수 있다.
 - 과거 데이터 해석을 깨뜨릴 수 있는 `type` 변경은 일반적인 update와 다르게 취급해야 한다.
-- 이미 사용된 항목을 중단할 때는 기본적으로 삭제하지 않고 `deprecated`로 전환한다.
+- 이미 사용된 항목을 중단할 때는 기본적으로 삭제하지 않고 `deprecated`로 전환하며, `deprecation_reason`을 반드시 기록한다.
 - 아직 어떤 장부 기록에도 사용되지 않은 항목만 물리 삭제할 수 있다.
 - 명세 변경은 `agent-ledger spec ...` 명령을 정상 경로로 사용한다.
 - 명세를 변경할 때는 전체 스키마 validation을 통과한 경우에만 파일을 갱신한다.
@@ -473,7 +500,7 @@ Agent Ledger는 이 둘 사이를 장부로 연결한다.
 - stable `id`와 사람이 읽는 `key`를 분리한다.
 - `description`과 `question`을 분리한다.
 - 값의 형식은 Validation에서 정의하고, 제출 의무는 Lifecycle의 `status`로 결정한다.
-- 항목의 현재 사용 여부를 `status`로 관리한다. `active`는 항상 제출 필수이며 `deprecated`는 새 커밋에서 요구하지 않는다.
+- 항목의 현재 사용 여부를 `status`로 관리한다. `active`는 항상 제출 필수이며 `deprecated`는 새 커밋에서 요구하지 않는다. `deprecated`에는 비어 있지 않은 `deprecation_reason`이 필수다. deprecated 항목은 `restore`를 통해 다시 active로 복구할 수 있다.
 - 누적 감사가 필요한 항목은 `audit.aggregation`과 `audit.threshold`를 가진다.
 - 대부분의 field 속성은 평평하게 유지하고 audit 설정만 중첩한다.
 
