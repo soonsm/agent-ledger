@@ -351,7 +351,108 @@ AGENTS.md는 **변하지 않는 workflow**만 정의하고, 현재 장부 명세
 
 ---
 
-## 11. 다음에 결정할 CLI 사항
+## 11. 장부 명세 관리 입력 UX
+
+장부 명세를 추가·수정할 때는 v1에서 **CLI flag 입력을 기본 방식**으로 사용한다.
+
+별도 JSON 파일을 만들어 입력하는 방식은 v1에 포함하지 않는다. 실제 사용에서 긴 입력이나 자동 생성 요구가 확인되면 이후 `--from-file` 같은 방식을 추가할 수 있다.
+
+### 항목 추가
+
+기본 형태:
+
+```bash
+git ledger spec add \
+  --key state_flags_added \
+  --type integer \
+  --min 0 \
+  --description "실행 중 값이 변하며 동작 상태를 표현하는 상태 필드의 추가 개수" \
+  --question "이번 변경에서 추가한 상태 플래그 수는? 없으면 0." \
+  --audit-aggregation sum \
+  --audit-threshold 30
+```
+
+원칙:
+
+- stable ID는 CLI가 자동 생성한다.
+- 새 항목은 `active` 상태로 생성한다.
+- v1에서는 모든 `active` 항목이 항상 제출 필수다. `required` 속성이나 `--required`, `--no-required` 옵션을 두지 않는다.
+- boolean 성격의 CLI 옵션이 필요한 경우 일반적인 CLI 관례처럼 flag의 존재 여부로 `true`를 표현한다.
+- JSON 파일 기반 입력은 v1 이후 필요성이 확인되면 추가한다.
+
+### 항목 수정
+
+기본 형태:
+
+```bash
+git ledger spec update L001 \
+  --question "이번 변경에서 새로 추가한 상태 플래그 수는? 없으면 0."
+```
+
+수정할 속성만 flag로 전달한다. 전달하지 않은 속성은 기존 값을 유지한다.
+
+Lifecycle 변경은 일반 `update`로 처리하지 않고 전용 명령을 사용한다.
+
+### 항목 폐기
+
+사용 이력이 있어도 더 이상 해당 관점을 관찰하지 않기로 했다면 항목을 deprecated할 수 있다.
+
+폐기 이유는 필수 입력이다.
+
+```bash
+git ledger spec deprecate L001 \
+  --reason "상태 플래그 개수 대신 상태 전이 모델 자체를 감사하기로 했기 때문"
+```
+
+성공하면 해당 항목은:
+
+- `status: deprecated`가 된다.
+- `deprecation_reason`에 입력한 이유가 저장된다.
+- 이후 새 커밋에서는 값을 요구하지 않는다.
+- 과거 장부를 해석하기 위한 정의와 ID는 유지된다.
+
+`--reason`이 없거나 빈 문자열이면 deprecate를 거절한다.
+
+### 항목 복구
+
+deprecated 항목은 다시 관찰할 필요가 생기면 active로 복구할 수 있다.
+
+```bash
+git ledger spec restore L001
+```
+
+복구하면:
+
+- `status: active`가 된다.
+- 새 커밋에서 다시 해당 항목의 값을 반드시 요구한다.
+- 현재 명세의 `deprecation_reason`은 제거한다.
+- stable ID는 그대로 유지한다.
+
+따라서 deprecated는 영구 삭제가 아니라 **관찰을 일시적으로 중단한 lifecycle 상태**다.
+
+### 항목 삭제
+
+아직 실제 장부 기록에서 사용된 적이 없는 항목만 물리 삭제할 수 있다.
+
+```bash
+git ledger spec remove L001
+```
+
+사용 이력이 있으면 삭제를 거절하고 `deprecate`를 안내한다.
+
+### 조회와 검증
+
+```bash
+git ledger spec list
+git ledger spec show L001
+git ledger spec validate
+```
+
+`list`와 `show`에서는 active/deprecated 상태를 명확하게 보여주고, deprecated 항목은 `deprecation_reason`도 함께 표시한다.
+
+---
+
+## 12. 다음에 결정할 CLI 사항
 
 다음 항목은 아직 확정하지 않았다.
 
