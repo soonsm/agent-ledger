@@ -123,7 +123,7 @@ agent-ledger.json
 
 장부 항목을 프로그램 코드에 하드코딩하지 않아야 한다.
 
-새 장부 항목을 추가하거나 기존 항목의 질문·타입·감사 기준 등을 변경할 때 `agent-ledger` 바이너리를 다시 빌드하지 않아야 한다.
+새 장부 항목을 추가하거나 기존 항목의 질문을 명확히 하거나, 기존 항목을 폐기하고 다른 타입·감사 기준의 새 항목을 추가할 때 `agent-ledger` 바이너리를 다시 빌드하지 않아야 한다.
 
 `agent-ledger` 바이너리는 장부 명세가 따라야 하는 meta-schema와 validation 로직을 가진다.
 
@@ -245,15 +245,29 @@ ID는 CLI가 자동 생성하는 방식을 우선 고려한다.
 git ledger spec update <id>
 ```
 
-수정 가능한 속성에는 최소 다음을 포함한다.
+v1에서는 같은 관찰 항목의 표현을 더 명확하게 만드는 metadata 수정만 허용한다.
 
-- key
-- question
-- description
-- type별 제약조건
-- audit 관련 설정
+수정 가능:
 
-이미 실제 장부에서 사용된 항목의 type처럼 과거 데이터 해석을 깨뜨릴 수 있는 변경은 제한하거나 명시적인 migration 정책이 필요하다.
+- `key`
+- `question`
+- `description`
+
+수정 불가:
+
+- `type`
+- `min` / `max`
+- `values`
+- `audit.aggregation`
+- `audit.threshold`
+- `status`
+- `deprecation_reason`
+
+수정 불가 속성을 바꿔야 한다면 기존 항목을 `deprecate`하고 새 항목을 `add`한다.
+
+판단 기준은 다음과 같다.
+
+> 같은 것을 더 명확하게 설명하는 변경은 같은 ID를 유지한다. 무엇을 측정하거나 어떻게 판단·누적하는지가 바뀌면 새 ID를 사용한다.
 
 ### R-SPEC-103 항목 폐기
 
