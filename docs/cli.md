@@ -382,6 +382,14 @@ git ledger spec add \
 
 ### 항목 수정
 
+v1의 `update`는 **같은 관찰 항목의 표현을 더 명확하게 만드는 수정만 허용한다.**
+
+수정 가능한 속성:
+
+- `key`
+- `description`
+- `question`
+
 기본 형태:
 
 ```bash
@@ -390,6 +398,31 @@ git ledger spec update L001 \
 ```
 
 수정할 속성만 flag로 전달한다. 전달하지 않은 속성은 기존 값을 유지한다.
+
+다음 속성은 v1에서 `update`할 수 없다.
+
+- `type`
+- `min` / `max`
+- `values`
+- `audit.aggregation`
+- `audit.threshold`
+- `status`
+- `deprecation_reason`
+
+이 값들을 바꾸는 것은 단순한 표현 수정이 아니라 **무엇을 기록하고 어떻게 누적할지에 대한 의미 변경**으로 본다.
+
+이 경우 기존 항목을 이유와 함께 deprecated한 뒤 새 항목을 생성한다.
+
+```bash
+git ledger spec deprecate L001 \
+  --reason "측정 기준을 상태 플래그 개수에서 상태 전이 추가 개수로 변경하기 때문"
+
+git ledger spec add ...
+```
+
+원칙은 다음과 같다.
+
+> 같은 것을 더 명확하게 설명하는 변경은 같은 ID를 유지한다. 무엇을 측정하거나 어떻게 판단·누적하는지가 바뀌면 새 ID를 사용한다.
 
 Lifecycle 변경은 일반 `update`로 처리하지 않고 전용 명령을 사용한다.
 
@@ -460,4 +493,4 @@ git ledger spec validate
 - 중복된 `--ledger-set L001=...`이 들어왔을 때 처리 방식
 - 모든 validation 오류를 한 번에 반환하는 구체적인 형식
 - 성공 시 출력 형식
-- `spec add/update/deprecate/restore/remove/...`의 구체적인 입력 UX
+- `spec add`의 타입별 세부 flag 문법 (enum values, string 제약 등)
